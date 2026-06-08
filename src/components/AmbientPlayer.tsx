@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { CloudRain, Wind, Waves, Music, Volume2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { CloudRain, Wind, Waves, Music, Volume2, TimerOff } from 'lucide-react';
 import { audioControl } from '../lib/audio';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -13,6 +13,42 @@ export default function AmbientPlayer() {
 
   const [volume, setVolume] = useState(50);
   const [showInfo, setShowInfo] = useState(true);
+  const [sleepTimerMinutes, setSleepTimerMinutes] = useState<number>(0);
+  const [timerRemaining, setTimerRemaining] = useState<number | null>(null);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (timerRemaining !== null && timerRemaining > 0) {
+      interval = setInterval(() => {
+        setTimerRemaining(prev => {
+          if (prev && prev <= 1) {
+            // Turn off all sounds
+            Object.keys(activeSounds).forEach(sound => {
+               if(activeSounds[sound]) toggleSound(sound);
+            });
+            return null;
+          }
+          return prev ? prev - 1 : null;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timerRemaining, activeSounds]);
+
+  const handleSetTimer = (minutes: number) => {
+    setSleepTimerMinutes(minutes);
+    if (minutes > 0) {
+      setTimerRemaining(minutes * 60);
+    } else {
+      setTimerRemaining(null);
+    }
+  };
+
+  const formatRemaining = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
 
   const toggleSound = (soundName: string) => {
     const isActive = !activeSounds[soundName];
@@ -103,16 +139,41 @@ export default function AmbientPlayer() {
           })}
         </div>
 
-        <div className="w-full flex items-center gap-4 px-4 pt-4 border-t border-slate-700/30">
-          <Volume2 className="w-4 h-4 text-slate-500" />
-          <input 
-            type="range" 
-            min="0" 
-            max="100" 
-            value={volume} 
-            onChange={handleVolume}
-            className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-500 focus:outline-none"
-          />
+        <div className="w-full flex flex-col gap-4 px-4 pt-4 border-t border-slate-700/30">
+          <div className="flex items-center gap-4">
+            <Volume2 className="w-4 h-4 text-slate-500" />
+            <input 
+              type="range" 
+              min="0" 
+              max="100" 
+              value={volume} 
+              onChange={handleVolume}
+              className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-teal-500 focus:outline-none"
+            />
+          </div>
+          
+          {/* Sleep Timer */}
+          <div className="flex items-center gap-4 mt-2">
+            <TimerOff className="w-4 h-4 text-slate-500" />
+            <div className="flex items-center gap-2 w-full">
+              <select 
+                value={sleepTimerMinutes}
+                onChange={(e) => handleSetTimer(Number(e.target.value))}
+                className="bg-slate-800/80 border border-slate-700/50 text-slate-300 text-xs rounded-lg px-2 py-1 outline-none appearance-none"
+              >
+                <option value={0}>Off</option>
+                <option value={5}>5 Menit</option>
+                <option value={15}>15 Menit</option>
+                <option value={30}>30 Menit</option>
+                <option value={60}>60 Menit</option>
+              </select>
+              {timerRemaining !== null && (
+                <span className="text-xs text-teal-400 font-mono ml-auto">
+                  {formatRemaining(timerRemaining)}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
       </motion.div>

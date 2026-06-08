@@ -13,11 +13,18 @@ import WellnessView from './components/WellnessView';
 import BreakOverlay from './components/BreakOverlay';
 import WaterOverlay from './components/WaterOverlay';
 import Navigation, { Tab } from './components/Navigation';
+import { AuthProvider, useAuth } from './lib/AuthContext';
 import { WellnessProvider } from './lib/WellnessContext';
 import { AnimatePresence } from 'motion/react';
+import Login from './components/Login';
 
-export default function App() {
+function AppContent() {
   const [activeTab, setActiveTab] = useState<Tab>('journal');
+  const { user } = useAuth();
+
+  if (!user) {
+    return <Login />;
+  }
 
   return (
     <WellnessProvider>
@@ -49,5 +56,13 @@ export default function App() {
       <WaterOverlay />
     </main>
     </WellnessProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }

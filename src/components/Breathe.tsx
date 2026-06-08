@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Settings2 } from 'lucide-react';
 
 const QUOTES = [
   "Terkadang, langkah paling produktif yang bisa kamu ambil adalah beristirahat.",
@@ -12,13 +13,6 @@ const QUOTES = [
 
 type Phase = 'inhale' | 'hold-in' | 'exhale' | 'hold-out';
 
-const PHASE_DURATIONS = {
-  'inhale': 4000,
-  'hold-in': 4000,
-  'exhale': 4000,
-  'hold-out': 4000
-};
-
 const PHASE_LABELS = {
   'inhale': 'Tarik Napas',
   'hold-in': 'Tahan Napas',
@@ -26,11 +20,29 @@ const PHASE_LABELS = {
   'hold-out': 'Tahan'
 };
 
+type Technique = 'box' | 'relax' | 'free';
+
+const TECHNIQUES: Record<Technique, { label: string, durations: Record<Phase, number> }> = {
+  'box': {
+     label: 'Box Breathing (4-4-4-4)',
+     durations: { 'inhale': 4000, 'hold-in': 4000, 'exhale': 4000, 'hold-out': 4000 }
+  },
+  'relax': {
+     label: 'Relaksasi (4-7-8)',
+     durations: { 'inhale': 4000, 'hold-in': 7000, 'exhale': 8000, 'hold-out': 0 }
+  },
+  'free': {
+     label: 'Bebas Mengalir',
+     durations: { 'inhale': 5000, 'hold-in': 1000, 'exhale': 5000, 'hold-out': 1000 }
+  }
+};
+
 export default function Breathe() {
   const [isActive, setIsActive] = useState(false);
   const [phase, setPhase] = useState<Phase>('inhale');
   const [showQuote, setShowQuote] = useState(false);
   const [randomQuote, setRandomQuote] = useState('');
+  const [technique, setTechnique] = useState<Technique>('box');
   const phaseTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -54,9 +66,17 @@ export default function Breathe() {
       else if (currentPhase === 'exhale') nextPhase = 'hold-out';
       else nextPhase = 'inhale';
 
+      // Skip phases with 0 duration (like hold-out in 4-7-8)
+      let nextDuration = TECHNIQUES[technique].durations[nextPhase];
+      if (nextDuration === 0) {
+          if(nextPhase === 'hold-out') nextPhase = 'inhale';
+          else if(nextPhase === 'hold-in') nextPhase = 'exhale';
+          nextDuration = TECHNIQUES[technique].durations[nextPhase];
+      }
+
       phaseTimerRef.current = setTimeout(() => {
         runPhase(nextPhase);
-      }, PHASE_DURATIONS[currentPhase]);
+      }, TECHNIQUES[technique].durations[currentPhase]);
     };
 
     runPhase('inhale');
@@ -64,7 +84,7 @@ export default function Breathe() {
     return () => {
       if (phaseTimerRef.current) clearTimeout(phaseTimerRef.current);
     };
-  }, [isActive]);
+  }, [isActive, technique]);
 
   const handleStartStop = () => {
     if (isActive) {
@@ -90,7 +110,27 @@ export default function Breathe() {
       className="max-w-2xl w-full mx-auto px-6 pt-16 pb-36 flex flex-col flex-1 shrink-0 md:pt-24 items-center justify-center min-h-[400px]"
     >
       <h2 className="text-3xl tracking-tight font-serif mb-2 text-slate-100 text-center">Pernapasan Relaksasi</h2>
-      <p className="text-slate-400 mb-16 font-light text-center">Ikuti ritme lingkaran. Aktifkan getaran jika didukung oleh perangkat.</p>
+      <p className="text-slate-400 mb-8 font-light text-center">Ikuti ritme lingkaran. Aktifkan getaran jika didukung oleh perangkat.</p>
+
+      {/* Technique Selector */}
+      <div className="flex items-center gap-2 mb-12 bg-slate-900/50 p-1 rounded-xl border border-slate-700/50">
+        {(Object.keys(TECHNIQUES) as Technique[]).map(t => (
+          <button
+             key={t}
+             onClick={() => {
+                if(!isActive) setTechnique(t);
+             }}
+             disabled={isActive}
+             className={`px-4 py-2 rounded-lg text-sm transition-all ${
+               technique === t 
+                 ? 'bg-slate-700 text-white shadow-md' 
+                 : 'text-slate-400 hover:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed'
+             }`}
+          >
+             {TECHNIQUES[t].label}
+          </button>
+        ))}
+      </div>
 
       <div className="relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center mb-16">
         {/* Helper ring (background) */}
@@ -123,7 +163,9 @@ export default function Breathe() {
                     {PHASE_LABELS[phase]}
                 </motion.div>
             ) : (
-                <div className="text-xl font-light tracking-wide text-slate-500">Mulai sesi 4-4-4-4</div>
+                <div className="text-xl font-light tracking-wide text-slate-500 text-center px-4">
+                  Mulai sesi {TECHNIQUES[technique].label}
+                </div>
             )}
         </div>
       </div>

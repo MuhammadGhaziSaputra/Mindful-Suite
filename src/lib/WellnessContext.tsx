@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { audioControl } from './audio';
 
 interface WellnessContextType {
   water: number;
@@ -28,6 +29,11 @@ export function WellnessProvider({ children }: { children: React.ReactNode }) {
     const today = new Date().toDateString();
 
     useEffect(() => {
+        // Request notification permission on mount
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+        
         const saved = localStorage.getItem('mindful_water_' + today);
         if (saved) setWater(parseInt(saved, 10));
     }, [today]);
@@ -38,6 +44,13 @@ export function WellnessProvider({ children }: { children: React.ReactNode }) {
            setTimeLeft(duration * 60);
        }
     }, [duration, isActive, showBreak]);
+
+    const notifyUser = (title: string, body: string) => {
+        try { audioControl.playChimeSingular(); } catch(e) {}
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(title, { body, icon: '/favicon.ico' });
+        }
+    };
 
     // Timer logic
     useEffect(() => {
@@ -53,6 +66,7 @@ export function WellnessProvider({ children }: { children: React.ReactNode }) {
             if (typeof navigator !== 'undefined' && navigator.vibrate) {
                 navigator.vibrate([200, 100, 200, 100, 500]);
             }
+            notifyUser('Waktunya Rehat Fisik!', 'Lakukan peregangan 20-20-20 sebentar yuk.');
         }
         return () => {
             if (interval) clearInterval(interval);
@@ -66,6 +80,7 @@ export function WellnessProvider({ children }: { children: React.ReactNode }) {
             if (typeof navigator !== 'undefined' && navigator.vibrate) {
                 navigator.vibrate([200, 100, 200]);
             }
+            notifyUser('Waktunya Minum Air', 'Tetap terhidrasi untuk fokus yang lebih tajam.');
         }, 60 * 60 * 1000); // 60 minutes
         return () => clearInterval(waterInterval);
     }, []);

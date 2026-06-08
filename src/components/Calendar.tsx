@@ -2,6 +2,15 @@ import React, { useMemo } from 'react';
 import { useJournal } from '../lib/store';
 import { motion } from 'motion/react';
 
+// Reusing same colors as Journal for the labels map
+const MOOD_LABELS: Record<string, string> = {
+  'bg-yellow-400': 'Senang',
+  'bg-green-500': 'Tenang',
+  'bg-blue-500': 'Sedih',
+  'bg-indigo-400': 'Cemas',
+  'bg-red-500': 'Marah/Stres'
+};
+
 export default function Calendar() {
   const { entries } = useJournal();
   
@@ -17,6 +26,31 @@ export default function Calendar() {
 
   const monthName = today.toLocaleString('default', { month: 'long', year: 'numeric' });
 
+  // Insight calculation
+  const insights = useMemo(() => {
+    const colorCounts: Record<string, number> = {};
+    let total = 0;
+    
+    // Only count entries for the current visual month display
+    Object.entries(entries).forEach(([dateStr, entry]) => {
+        if(dateStr.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`) && entry.moodColor) {
+            colorCounts[entry.moodColor] = (colorCounts[entry.moodColor] || 0) + 1;
+            total++;
+        }
+    });
+
+    let dominantColor = '';
+    let max = 0;
+    Object.entries(colorCounts).forEach(([color, count]) => {
+        if(count > max) {
+            max = count;
+            dominantColor = color;
+        }
+    });
+
+    return { colorCounts, total, dominantColor };
+  }, [entries, year, month]);
+
   return (
      <motion.div 
         initial={{ opacity: 0, y: 10 }}
@@ -25,7 +59,38 @@ export default function Calendar() {
         className="max-w-3xl w-full mx-auto px-6 pt-16 pb-36 md:pt-24 flex-1 shrink-0"
      >
         <h2 className="text-3xl tracking-tight font-serif mb-2 text-slate-100">Kalender Emosi</h2>
-        <p className="text-slate-400 mb-12 font-light">Rekam jejak warna perasaanmu di bulan {monthName}.</p>
+        <p className="text-slate-400 mb-8 font-light">Rekam jejak warna perasaanmu di bulan {monthName}.</p>
+
+        {/* Insight Summary */}
+        {insights.total > 0 && (
+          <div className="mb-10 bg-slate-900/40 border border-slate-800/60 rounded-2xl p-6 flex flex-col md:flex-row items-center gap-6">
+             <div className="flex-1">
+                 <h3 className="text-lg font-medium text-slate-200 mb-2">Insight Bulan Ini</h3>
+                 <p className="text-sm font-light text-slate-400 leading-relaxed">
+                     Kamu telah mencatat perasaanmu sebanyak <strong className="text-slate-200">{insights.total} hari</strong> bulan ini. 
+                     {insights.dominantColor && (
+                         <span> Warna dominanmu adalah <strong className="text-slate-200">{MOOD_LABELS[insights.dominantColor]}</strong>.</span>
+                     )}
+                 </p>
+             </div>
+             
+             {/* Small visual bar chart row */}
+             <div className="w-full md:w-1/2 flex h-4 rounded-full overflow-hidden bg-slate-800">
+                {Object.entries(insights.colorCounts).map(([color, count]) => {
+                   const width = (count / insights.total) * 100;
+                   // Strip 'bg-' from tailwind classes to use safely as background color if needed, but since it's tailwind we can just apply the class
+                   return (
+                      <div 
+                        key={color} 
+                        className={`h-full ${color}`} 
+                        style={{ width: `${width}%` }}
+                        title={`${MOOD_LABELS[color]}: ${count} hari`}
+                      />
+                   )
+                })}
+             </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-7 gap-2 md:gap-4 lg:gap-6">
            {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map((day, i) => (

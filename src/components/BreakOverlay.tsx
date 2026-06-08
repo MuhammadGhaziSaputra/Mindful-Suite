@@ -7,22 +7,30 @@ const EXERCISES = [
   {
      title: 'Peregangan Leher',
      instruction: 'Duduk tegak, jatuhkan dagu perlahan ke dada, lalu putar leher perlahan 360 derajat. Nikmati setiap regangannya. Lakukan juga ke arah sebaliknya.',
-     Icon: RefreshCw
+     Icon: RefreshCw,
+     anim: { rotate: 360 },
+     trans: { duration: 4, repeat: Infinity, ease: 'linear' }
   },
   {
      title: 'Peregangan Pergelangan Tangan',
      instruction: 'Luruskan satu lengan ke depan dengan telapak tangan menghadap atas. Gunakan tangan satunya untuk menarik perlahan jari-jari ke arah tubuh. Tahan 15 detik.',
-     Icon: Hand
+     Icon: Hand,
+     anim: { rotate: [-10, 10, -10] },
+     trans: { duration: 2, repeat: Infinity, ease: 'easeInOut' }
   },
   {
      title: 'Relaksasi Mata (20-20-20)',
      instruction: 'Palingkan pandangan dari layar, tatap sebuah objek yang berjarak sekitar 6 meter (20 kaki) selama minimal 20 detik penuh untuk mengistirahatkan otot rektus matamu.',
-     Icon: Eye
+     Icon: Eye,
+     anim: { scale: [1, 1.2, 1], opacity: [1, 0.5, 1] },
+     trans: { duration: 3, repeat: Infinity, ease: 'easeInOut' }
   },
   {
      title: 'Peregangan Bahu',
      instruction: 'Angkat kedua bahumu tinggi-tinggi mendekati telinga, tahan keras selama 3 detik, lalu jatuhkan dengan cepat & rileks. Ulangi gerakan ini 3 kali.',
-     Icon: ArrowUpCircle
+     Icon: ArrowUpCircle,
+     anim: { y: [0, -15, 0] },
+     trans: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' }
   }
 ];
 
@@ -54,8 +62,14 @@ export default function BreakOverlay() {
                       transition={{ delay: 0.3 }}
                       className="relative z-10 max-w-lg w-full bg-slate-900 border border-slate-700/60 rounded-[2.5rem] p-10 flex flex-col items-center shadow-2xl text-center"
                    >
-                       <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mb-8">
-                          <exercise.Icon className="w-10 h-10 text-teal-400 stroke-[1.5]" />
+                       <div className="w-20 h-20 bg-teal-500/10 rounded-full flex items-center justify-center mb-8 overflow-hidden relative">
+                          <motion.div
+                             animate={exercise.anim as any}
+                             transition={exercise.trans as any}
+                             className="flex items-center justify-center w-full h-full"
+                          >
+                            <exercise.Icon className="w-10 h-10 text-teal-400 stroke-[1.5]" />
+                          </motion.div>
                        </div>
 
                        <h2 className="text-3xl font-serif text-slate-100 mb-4 tracking-tight">Waktunya Rehat</h2>

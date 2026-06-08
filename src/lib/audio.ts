@@ -181,6 +181,47 @@ export class ZenAudioEngine {
     delete this.sources[key];
   }
 
+  playBurnSound() {
+    this.init();
+    if (!this.ctx || !this.masterGain) return;
+    
+    // Synthesize a crackling fire / whoosh sound
+    const noise = this.createWhiteNoise();
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 400; // Deep rumble
+    
+    const gain = this.ctx.createGain();
+    
+    noise.connect(filter).connect(gain).connect(this.masterGain);
+    
+    // Envelope for whoosh
+    gain.gain.setValueAtTime(0, this.ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.6, this.ctx.currentTime + 0.5);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 2.5);
+    
+    noise.start();
+    noise.stop(this.ctx.currentTime + 2.6);
+  }
+
+  playChimeSingular() {
+    this.init();
+    if (!this.ctx || !this.masterGain) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    
+    osc.frequency.value = 523.25; // High C
+    osc.type = 'sine';
+    
+    gain.gain.setValueAtTime(0, this.ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.4, this.ctx.currentTime + 0.05); 
+    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 3); 
+
+    osc.connect(gain).connect(this.masterGain);
+    osc.start();
+    osc.stop(this.ctx.currentTime + 3.1);
+  }
+
   setVolume(val: number) { // 0.0 to 1.0
      if (this.masterGain && this.ctx) {
        this.masterGain.gain.setValueAtTime(val, this.ctx.currentTime);

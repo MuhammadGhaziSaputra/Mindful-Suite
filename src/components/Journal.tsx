@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Flame } from 'lucide-react';
+import { audioControl } from '../lib/audio';
 import { useJournal } from '../lib/store';
 
 const MOODS = [
@@ -51,6 +52,11 @@ export default function Journal() {
   const handleBurn = () => {
     if (!text) return;
     setIsBurning(true);
+    
+    try {
+      audioControl.playBurnSound();
+    } catch(e) {}
+
     // Erase text immediately in state, but wait for animation to complete before clearing from screen smoothly
     setTimeout(() => {
        burnNote(today);
@@ -90,7 +96,7 @@ export default function Journal() {
                  <motion.textarea
                    key="canvas"
                    initial={{ opacity: 0, scale: 0.95 }}
-                   animate={{ opacity: 1, scale: 1 }}
+                   animate={{ opacity: 1, scale: 1, filter: 'brightness(1) blur(0px)' }}
                    exit={{ 
                       opacity: 0, 
                       y: -80, 
@@ -112,10 +118,14 @@ export default function Journal() {
                   className="absolute inset-0 flex items-center justify-center pointer-events-none"
                 >
                    <motion.div
-                      animate={{ scale: [1, 1.2, 1], y: [0, -20, -100] }}
-                      transition={{ duration: 2, ease: "easeIn" }}
+                      animate={{ 
+                         scale: [1, 2, 0], 
+                         y: [0, -40, -150],
+                         opacity: [1, 0.8, 0] 
+                      }}
+                      transition={{ duration: 2.5, ease: "easeInOut" }}
                    >
-                     <Flame className="w-48 h-48 text-orange-600 fill-orange-500 animate-pulse drop-shadow-[0_0_30px_rgba(234,88,12,0.8)]" />
+                     <Flame className="w-48 h-48 text-orange-600 fill-orange-500 animate-pulse drop-shadow-[0_0_50px_rgba(234,88,12,1)]" />
                    </motion.div>
                 </motion.div>
              )}
