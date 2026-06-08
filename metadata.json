@@ -1,0 +1,6 @@
+{
+  "name": "Mindful Suite",
+  "description": "Suite aplikasi relaksasi: Digital Mood Journal, Pemandu Napas, Virtual Zen Garden, dan Pengingat Micro-Break untuk kesehatan fisik & mental.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
